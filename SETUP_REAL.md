@@ -1,106 +1,99 @@
-# Configuración REAL
+# Configuración real
 
-## 1. Instalar
+## Microsoft 365 / Outlook / Teams
 
-PowerShell:
+Configura en `.env`:
 
-    .\scripts\install_windows.ps1
+```text
+MS_CLIENT_ID=<Application Client ID>
+MS_TENANT_ID=<Tenant ID>
+MS_ENABLE_TEAMS_CHANNELS=false
+```
 
-## 2. Microsoft Outlook / Calendar / Teams
+La App Registration debe admitir Public Client Flow. Scopes configurados por defecto:
 
-En Microsoft Entra admin center:
+- User.Read
+- Mail.Read
+- Mail.Send
+- Calendars.ReadWrite
+- Chat.Read
+- Team.ReadBasic.All
+- Channel.ReadBasic.All
 
-1. App registrations -> New registration.
-2. Tipo de cuenta: organización según tu tenant. Para uso multitenant, usa el tenant apropiado.
-3. Copia Application (client) ID a `MS_CLIENT_ID`.
-4. Authentication -> Allow public client flows = Yes.
-5. API permissions -> Microsoft Graph -> Delegated permissions:
-   - User.Read
-   - Mail.Read
-   - Mail.Send
-   - Calendars.ReadWrite
-   - Chat.Read
-   - Team.ReadBasic.All
-   - Channel.ReadBasic.All
-6. Para leer mensajes de canales de Teams agrega `ChannelMessage.Read.All` y obtén consentimiento de administrador. Luego pon `MS_ENABLE_TEAMS_CHANNELS=true`.
-7. No agregues client secret para este flujo de escritorio.
+Para mensajes de canales agrega `ChannelMessage.Read.All`, concede el consentimiento administrativo requerido y después habilita `MS_ENABLE_TEAMS_CHANNELS=true`.
 
-Inicia el servidor y ejecuta POST `/auth/microsoft/device-login` desde Swagger. Sigue el código de dispositivo mostrado por Microsoft.
+Flujo:
 
-## 3. Gmail / Google Calendar
+1. `POST /auth/microsoft/device-login`.
+2. Abre `verification_uri` e ingresa `user_code`.
+3. Consulta `GET /auth/microsoft/device-login/status/{job_id}`.
+4. Verifica con `GET /auth/microsoft/me`.
 
-1. Crea un proyecto en Google Cloud.
-2. Habilita Gmail API y Google Calendar API.
-3. Configura OAuth consent screen.
-4. Crea OAuth Client ID tipo Desktop app.
-5. Descarga JSON como `secrets/google_credentials.json`.
-6. Ejecuta POST `/auth/google/login`.
-7. Autoriza los scopes solicitados.
+Sin configuración devuelve 503; sin sesión válida devuelve 401. No debe producir 500 por credenciales ausentes.
 
-## 4. GitHub
+## Google Workspace
 
-Para uso personal, crea un fine-grained token con solo los repositorios y permisos necesarios. Ponlo en `.env` como `GITHUB_TOKEN`. Nunca lo subas a Git.
+1. Habilita Gmail API y Google Calendar API.
+2. Configura OAuth consent screen.
+3. Crea OAuth Client y descarga el JSON.
+4. Guarda el archivo como `secrets/google_credentials.json`.
+5. Ejecuta `POST /auth/google/login`.
+6. Abre `authorization_url`.
+7. Google redirige a `/auth/google/callback` y el token queda cifrado localmente.
+8. Verifica con `GET /auth/google/me`.
 
-## 5. Uso
+Scopes: Gmail readonly/send y Calendar readonly/events.
 
-Servidor:
+## GitHub
 
-    .\scripts\run_windows.ps1
+Configura un fine-grained token con mínimo privilegio:
 
-Swagger:
+```text
+GITHUB_TOKEN=<token>
+```
 
-    http://127.0.0.1:8000/docs
+Verifica con:
 
-Ejemplos:
+```text
+GET /auth/github/me
+```
 
-- `mail/list_unread` con `source=microsoft` o `source=google`.
-- `calendar/list_events`.
-- `calendar/create_event` con `approved=true`.
-- `meeting/list_chats` y `meeting/chat_messages`.
-- `meeting/channel_messages` solo con permiso administrativo correspondiente.
-- `development/github_repos`.
-- `monitoring/system_health`.
-- `security/scan_secrets`.
-- `database/sqlite_integrity`.
-- `reminder/create_reminder`.
+La UI permite conectar/habilitar, probar y desconectar lógicamente sin eliminar el token del entorno.
 
-## Política de seguridad
+## Aprobaciones
 
-READ: automático.
-PREPARE: puede ejecutar análisis local controlado.
-WRITE: requiere `approved=true`.
-DANGEROUS: bloqueado.
+Para WRITE/DANGEROUS:
 
-No guardes contraseñas de Outlook, Gmail o Teams en `.env`. Se usan tokens OAuth.
+1. `POST /api/v1/approvals/request` con agente, acción y payload exacto.
+2. `POST /api/v1/approvals/{id}/decision` con `approve`.
+3. La respuesta entrega un `approval_token` de un solo uso.
+4. Ejecuta la acción con `approval_id` + `approval_token`.
 
+Una aprobación expirada, reutilizada, de otro actor o con payload/acción/target distinto es rechazada.
 
-## Flujo Microsoft Device Code corregido (v1.0.1)
+## RBAC
 
-1. Configura `MS_CLIENT_ID` en `.env`.
-2. En Swagger ejecuta `POST /auth/microsoft/device-login`.
-3. La respuesta entrega `user_code`, `verification_uri` y `job_id` inmediatamente.
-4. Abre `verification_uri`, ingresa `user_code` y autentícate.
-5. Consulta `GET /auth/microsoft/device-login/status/{job_id}` hasta obtener `status: authenticated`.
-6. Verifica con `GET /auth/microsoft/me`.
+Headers soportados en despliegue local/proxy:
 
-El registro de aplicación de Microsoft Entra debe permitir Public Client Flow para Device Code.
+```text
+X-Actor: usuario
+X-Role: READ_ONLY | USER | OPERATOR | ADMIN
+X-Correlation-ID: opcional
+```
 
+En production configura un proxy/SSO que establezca estos headers de forma confiable. No expongas el servicio productivo directamente aceptando headers aportados por Internet.
 
-## 6. Interfaz profesional 1.1.0
+## Producción
 
-Dashboard: `http://127.0.0.1:8000/`
+Copia `config/production.env.example` a `config/production.env` y ajusta:
 
-Vistas:
+- DEBUG=false.
+- Trusted Hosts explícitos.
+- CORS restringido.
+- `DEFAULT_ROLE=READ_ONLY`.
+- `APPROVAL_REQUIRE_DIFFERENT_ACTOR=true`.
+- `HAGUER_MASTER_KEY` inyectada desde un gestor de secretos.
+- OAuth redirect URIs reales.
+- Base de datos, backup y logging según infraestructura.
 
-- `/ui/agents`
-- `/ui/integrations`
-- `/ui/automations`
-- `/ui/tasks`
-- `/ui/monitoring`
-- `/ui/audit`
-- `/ui/settings`
-
-Swagger se conserva en `/docs` como catálogo técnico y consola de pruebas de la API.
-OpenAPI permanece en `/openapi.json`.
-
-Las automatizaciones recurrentes solo admiten acciones READ y PREPARE. Las acciones WRITE requieren aprobación interactiva y DANGEROUS permanece bloqueado.
+Rota credenciales invalidando tokens en los proveedores, desconectando la integración y generando credenciales nuevas. Nunca registres tokens en Git.

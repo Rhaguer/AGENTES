@@ -1,7 +1,7 @@
 {% extends "base.html" %}
-{% block subtitle %}Autenticación y verificación de Microsoft 365, Google Workspace, GitHub y servicios locales.{% endblock %}
+{% block subtitle %}Microsoft 365, Google Workspace y GitHub con estado normalizado, conexión, reconexión, desconexión y prueba.{% endblock %}
 {% block content %}
-<div class="notice notice--warning">Las credenciales se configuran en <span class="code">.env</span> o <span class="code">secrets/</span>. La interfaz no muestra ni almacena contraseñas. OAuth genera tokens locales ignorados por Git.</div>
-<section class="section panel"><div class="panel-header"><h2 class="panel-title">Integraciones</h2><a href="/ui/settings" class="btn btn--sm btn--secondary">CONFIGURACIÓN</a></div><div class="panel-body"><div class="integration-list" id="integration-list"></div></div></section>
-<section class="section panel"><div class="panel-header"><h2 class="panel-title">Resultado de autenticación / verificación</h2></div><div class="panel-body"><div class="result-box" id="integration-result">Selecciona una integración.</div></div></section>
+<div class="notice notice--warning">Los secretos no se muestran en la API. Los tokens Microsoft y Google se almacenan cifrados; `.env`, claves y credenciales OAuth deben permanecer fuera de Git.</div>
+<section class="panel"><div class="panel-header"><h2 class="panel-title">Integraciones</h2><button class="btn btn--secondary btn--sm" id="integrations-refresh">ACTUALIZAR</button></div><div class="panel-body"><div class="integration-list" id="integration-list"></div></div></section>
+<section class="section panel"><div class="panel-header"><h2 class="panel-title">Autenticación / verificación</h2></div><div class="panel-body"><div class="result-box" id="integration-result">Selecciona una acción.</div></div></section>
 {% endblock %}

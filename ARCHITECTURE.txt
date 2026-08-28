@@ -1,41 +1,53 @@
-HAGUER AGENT PLATFORM REAL UI 1.1.0
+HAGUER AGENT PLATFORM 2.0.0
 
-USUARIO
-  |
-  +--> Dashboard / UI
-  |      +-- /ui/agents
-  |      +-- /ui/integrations
-  |      +-- /ui/automations
-  |      +-- /ui/tasks
-  |      +-- /ui/monitoring
-  |      +-- /ui/audit
-  |      +-- /ui/settings
-  |
-  +--> Swagger /docs --------------------- Consola técnica
-  +--> OpenAPI /openapi.json ------------- Contrato API
-                    |
-                  FastAPI
-                    |
-              Orchestrator Agent
-                    |
-     +--------------+-----------------+
-     |              |                 |
-Productividad    Ingeniería          Control
- Mail            Development         Security
- Calendar        DevOps              Monitoring
- Teams           Database            Audit
- Task            Documentation       Policy Engine
- Reminder        Knowledge
- Follow-up
-     |
-     +--> Microsoft Graph (Outlook / Calendar / Teams)
-     +--> Google APIs (Gmail / Calendar)
-     +--> GitHub API
-     +--> Sistema local / SQLite / Git
+Usuario / Identity Proxy
+        |
+        +--> UI profesional ------------------------------+
+        |   Dashboard / Agents / Integrations / Jobs      |
+        |   Tasks / Monitoring / Audit / Settings         |
+        |                                                  |
+        +--> Swagger /docs                                 |
+        +--> OpenAPI /openapi.json                         |
+        +--> API /api/v1 ---------------------------------+
+                                                             |
+                          Correlation + Rate Limit + RBAC     |
+                                                             v
+                                                       Orchestrator
+                                                             |
+                              +------------------------------+------------------+
+                              |                              |                  |
+                         PolicyEngine                 ApprovalService      AuditService
+                              |                              |                  |
+                              +--------------+---------------+------------------+
+                                             |
+                           +-----------------+-------------------+
+                           |                 |                   |
+                       Productivity       Engineering          Control
+                       Mail/Calendar      Development          Security
+                       Teams/Tasks        DevOps/DB            Monitoring
+                       Reminder           Documentation        Audit
+                       Follow-up          Knowledge
+                           |
+          +----------------+-------------------+------------------+
+          |                                    |                  |
+ Microsoft Graph                        Google APIs          GitHub API
+ Outlook/Calendar/Teams                 Gmail/Calendar      Repos/Actions
 
-POLÍTICA
-READ       -> automática
-PREPARE    -> análisis/preparación
-WRITE      -> aprobación explícita
-DANGEROUS  -> bloqueado
-AUTOMATION -> solo READ/PREPARE
+Persistence: SQLite WAL
+- tasks + task_history
+- reminders
+- approvals
+- audit_events
+- automations + automation_history
+
+Secrets:
+- Microsoft cache encrypted
+- Google token encrypted
+- key/token files outside Git
+
+Risk:
+READ       direct by RBAC
+PREPARE    no resource modification
+WRITE      one-time approval
+DANGEROUS  ADMIN + one-time approval
+AUTOMATION READ/PREPARE only

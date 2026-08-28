@@ -1,26 +1,20 @@
 # Changelog
 
-## 1.1.0
+## 2.0.0
 
-- Dashboard profesional en `/`.
-- UI de agentes en `/ui/agents`.
-- UI de integraciones en `/ui/integrations`.
-- UI de automatizaciones en `/ui/automations`.
-- UI de tareas y recordatorios en `/ui/tasks`.
-- UI de monitoreo en `/ui/monitoring`.
-- UI de auditoría en `/ui/audit`.
-- UI de configuración en `/ui/settings`.
-- Swagger conservado en `/docs`.
-- OpenAPI conservado en `/openapi.json`.
-- Tema Graphite / Steel Blue con fondo gris grafito, paneles oscuros y acentos azul acero.
-- Ejecutor visual de agentes con niveles READ/PREPARE/WRITE/DANGEROUS.
-- Automatizaciones persistentes en SQLite para acciones READ/PREPARE.
-- Scheduler de automatizaciones con APScheduler.
-- Estado dinámico de agentes e integraciones.
-- Flujo visual Microsoft Device Code con polling de estado.
-- Verificación visual Microsoft, Google y GitHub.
-- Monitoreo dinámico CPU/RAM/disco/procesos.
-- Comprobación TCP desde UI.
-- Arranque de Windows separado en instalación, inicio normal y reparación forzada.
-- Self-test corregido para ejecución directa desde `scripts`.
-- Router determinístico ampliado para correo, calendario, Teams, tareas, recordatorios, seguridad, GitHub y monitoreo.
+- Corrige TemplateResponse con Starlette actual y elimina el HTTP 500 del dashboard.
+- Reemplaza self-test de introspección defectuosa por pruebas HTTP reales.
+- API v1 versionada y compatibilidad temporal con rutas antiguas.
+- PolicyEngine, RBAC y ApprovalService de un solo uso.
+- Auditoría persistente SQLite y logging JSONL.
+- Microsoft Device Code Flow con cache cifrada.
+- Google OAuth callback con token cifrado.
+- GitHub token validation, repos, workflows y branch control.
+- Integrations status normalizado.
+- Errores globales estructurados.
+- Correlation ID, rate limiting y trusted hosts/CORS.
+- Retry/backoff/circuit breaker para APIs HTTP externas.
+- Dashboard/UI Graphite + Steel Blue.
+- Scheduler persistente y automation history.
+- Tareas/recordatorios persistentes y task history.
+- Tests unitarios, integración, seguridad y E2E.

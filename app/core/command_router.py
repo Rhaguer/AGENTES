@@ -1,76 +1,56 @@
-import re
-from datetime import datetime, timedelta
+from __future__ import annotations
+import re, unicodedata
+from datetime import datetime,timedelta
 from zoneinfo import ZoneInfo
-
 from app.core.config import settings
-from app.core.models import AgentRequest
+from app.core.errors import AppError
+from app.core.models import CommandResolution
 
 
-class DeterministicCommandRouter:
-    """Router de lenguaje natural acotado y verificable.
+def normalize(text):
+    text=unicodedata.normalize('NFD',text.lower())
+    text=''.join(c for c in text if unicodedata.category(c)!='Mn')
+    return re.sub(r'\s+',' ',text).strip()
 
-    No intenta adivinar intenciones fuera de patrones explícitos. Para acciones
-    complejas o ambiguas se debe usar el ejecutor visual o Swagger.
-    """
+class IntentClassifier:
+    patterns={
+      'mail_unread':[r'correos? (sin leer|no leidos?|nuevos?|pendientes?)',r'(revisa|ver|muestra|muestreme|tengo).*correos?',r'emails? pendientes?'],
+      'calendar_list':[r'(agenda|calendario|reuniones?|eventos?).*(hoy|manana)',r'(que|cuales).*reuniones?'],
+      'teams_chats':[r'teams.*chats?',r'mensajes?.*teams'],
+      'tasks_pending':[r'tareas?.*pendientes?'],
+      'system_health':[r'(salud|estado).*(pc|sistema|equipo)',r'(cpu|ram|disco).*estado'],
+      'github_repos':[r'repositorios?.*github',r'github.*repositorios?'],
+      'security_posture':[r'(seguridad|postura de seguridad|auditoria de seguridad)'],
+    }
+    def classify(self,text):
+        t=normalize(text)
+        for intent,pats in self.patterns.items():
+            for p in pats:
+                if re.search(p,t):return intent,0.92
+        if any(w in t for w in ('correo','email','gmail','outlook')):return 'mail_unread',0.72
+        raise AppError('COMMAND_NOT_RECOGNIZED','No se pudo resolver el comando de forma determinística',400)
 
-    def _calendar_window(self, text: str):
-        tz = ZoneInfo(settings.timezone)
-        now = datetime.now(tz)
-        if 'mañana' in text or 'manana' in text:
-            day = (now + timedelta(days=1)).date()
-        else:
-            day = now.date()
-        start = datetime.combine(day, datetime.min.time(), tzinfo=tz)
-        end = start + timedelta(days=1)
-        return start.isoformat(), end.isoformat()
+class EntityExtractor:
+    def extract(self,text,intent):
+        t=normalize(text);e={}
+        if intent=='mail_unread':e['source']='google' if ('gmail' in t or 'google' in t) else 'microsoft';e['limit']=20
+        elif intent=='calendar_list':
+            e['source']='google' if ('google' in t or 'gmail' in t) else 'microsoft'
+            tz=ZoneInfo(settings.timezone);now=datetime.now(tz);day=(now+timedelta(days=1)).date() if 'manana' in t else now.date()
+            start=datetime.combine(day,datetime.min.time(),tzinfo=tz);e.update(start=start.isoformat(),end=(start+timedelta(days=1)).isoformat(),limit=50)
+        return e
 
-    def route(self, text, approved=False):
-        raw = text.strip()
-        t = raw.lower()
+class AgentResolver:
+    mapping={'mail_unread':'mail','calendar_list':'calendar','teams_chats':'meeting','tasks_pending':'task','system_health':'monitoring','github_repos':'development','security_posture':'security'}
+    def resolve(self,intent):return self.mapping[intent]
 
-        if 'correo' in t or 'gmail' in t or 'outlook' in t:
-            if any(x in t for x in ('no leído', 'no leido', 'no leídos', 'no leidos', 'nuevos', 'pendientes')):
-                source = 'google' if ('gmail' in t or 'google' in t) else 'microsoft'
-                return 'mail', AgentRequest(
-                    action='list_unread',
-                    payload={'source': source, 'limit': 20},
-                    approved=approved,
-                )
+class ActionResolver:
+    mapping={'mail_unread':'list_unread','calendar_list':'list_events','teams_chats':'list_chats','tasks_pending':'list_tasks','system_health':'system_health','github_repos':'github_repos','security_posture':'security_posture'}
+    def resolve(self,intent):return self.mapping[intent]
 
-        if any(x in t for x in ('reuniones', 'eventos', 'calendario', 'agenda')) and any(x in t for x in ('hoy', 'mañana', 'manana')):
-            source = 'google' if ('google' in t or 'gmail' in t) else 'microsoft'
-            start, end = self._calendar_window(t)
-            return 'calendar', AgentRequest(
-                action='list_events',
-                payload={'source': source, 'start': start, 'end': end, 'limit': 50},
-                approved=approved,
-            )
-
-        if 'teams' in t and ('chat' in t or 'chats' in t):
-            return 'meeting', AgentRequest(action='list_chats', payload={'limit': 30}, approved=approved)
-
-        if 'teams' in t and any(x in t for x in ('equipos', 'teams disponibles', 'mis equipos')):
-            return 'meeting', AgentRequest(action='list_teams', payload={}, approved=approved)
-
-        if any(x in t for x in ('salud', 'estado')) and any(x in t for x in ('pc', 'sistema', 'equipo')):
-            return 'monitoring', AgentRequest(action='system_health', approved=approved)
-
-        if 'tareas' in t and ('pendiente' in t or 'pendientes' in t):
-            return 'task', AgentRequest(action='list_tasks', payload={'status': 'pending'}, approved=approved)
-
-        if 'recordatorios' in t and ('pendiente' in t or 'pendientes' in t):
-            return 'reminder', AgentRequest(action='list_reminders', payload={'status': 'pending'}, approved=approved)
-
-        if 'repositorios' in t and 'github' in t:
-            return 'development', AgentRequest(action='github_repos', payload={'limit': 50}, approved=approved)
-
-        if any(x in t for x in ('seguridad', 'postura de seguridad', 'controles de seguridad')):
-            return 'security', AgentRequest(action='security_posture', payload={}, approved=approved)
-
-        if any(x in t for x in ('procesos', 'servicios')) and any(x in t for x in ('pc', 'sistema', 'windows', 'equipo')):
-            return 'devops', AgentRequest(action='check_services', payload={}, approved=approved)
-
-        raise ValueError(
-            'Comando natural no reconocido por el router determinístico. '
-            'Usa /ui/agents o Swagger /docs para seleccionar explícitamente agente, acción y payload.'
-        )
+class CommandRouter:
+    def __init__(self):self.intent=IntentClassifier();self.entities=EntityExtractor();self.agents=AgentResolver();self.actions=ActionResolver()
+    def route(self,text):
+        intent,confidence=self.intent.classify(text);entities=self.entities.extract(text,intent)
+        if intent=='tasks_pending':entities={'status':'pending'}
+        return CommandResolution(intent=intent,agent=self.agents.resolve(intent),action=self.actions.resolve(intent),entities=entities,confidence=confidence)

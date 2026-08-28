@@ -1,0 +1,36 @@
+HAGUER Agent Platform 2.0.0 - VALIDATION
+
+Python compileall: OK
+pytest: 19 passed
+selftest: OK
+JavaScript node --check: OK
+OpenAPI: 35 paths
+Required schemas: AgentInfo / APIError present
+
+HTTP verified 200:
+/
+/ui/agents
+/ui/integrations
+/ui/automations
+/ui/tasks
+/ui/monitoring
+/ui/audit
+/ui/settings
+/docs
+/openapi.json
+/api/v1/version
+/api/v1/agents
+/api/v1/health
+
+Security verified:
+- WRITE without approval -> 403
+- approved:true cannot bypass -> 403
+- single-use approval -> second use rejected
+- approval scope mismatch -> rejected
+- READ_ONLY PREPARE -> 403
+- nonexistent agent/action -> 404
+- invalid input -> 422
+- rate limit -> 429
+- missing Microsoft/GitHub credentials -> controlled 401/503, never 500
+
+External credentials were not fabricated and are intentionally absent from the package.

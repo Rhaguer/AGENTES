@@ -1,49 +1,58 @@
-# HAGUER Agent Platform REAL UI 1.1.0
+# HAGUER Agent Platform 2.0.0
 
-Plataforma local de agentes para productividad e Ingeniería en Informática.
+Plataforma local de agentes para productividad e Ingeniería en Informática, con UI operativa, API FastAPI versionada, Swagger, OAuth, RBAC, aprobaciones de un solo uso, auditoría SQLite, automatizaciones y monitoreo.
 
-## Interfaz
+## URLs
 
-- `/` Dashboard profesional.
-- `/ui/agents` Administración y ejecución de agentes.
-- `/ui/integrations` Microsoft 365 / Google Workspace / GitHub.
-- `/ui/automations` Automatizaciones READ/PREPARE.
+- `http://127.0.0.1:8000/` Dashboard operativo.
+- `/ui/agents` Agentes.
+- `/ui/integrations` Microsoft / Google / GitHub.
+- `/ui/automations` Scheduler y JobStore.
 - `/ui/tasks` Tareas y recordatorios.
-- `/ui/monitoring` CPU / RAM / disco / TCP.
-- `/ui/audit` Auditoría.
-- `/ui/settings` Configuración no sensible.
+- `/ui/monitoring` Salud y latencia.
+- `/ui/audit` Auditoría persistente.
+- `/ui/settings` Configuración saneada.
 - `/docs` Swagger técnico.
-- `/openapi.json` OpenAPI.
+- `/openapi.json` contrato OpenAPI.
+- `/api/v1/*` API estable v1.
 
 ## Agentes
 
-Orchestrator + 13 agentes especializados: Mail, Calendar, Teams/Meeting, Task, Reminder, Follow-up, Development, DevOps, Security, Database, Documentation, Monitoring y Knowledge.
-
-## Instalar en Windows
-
-Desde `C:\DEV\AGENTES`:
-
-    .\INSTALAR_AGENTES.cmd
-
-Luego iniciar normalmente:
-
-    .\INICIAR_AGENTES.cmd
-
-Abrir:
-
-    http://127.0.0.1:8000/
-
-Swagger permanece en:
-
-    http://127.0.0.1:8000/docs
+Orchestrator + Mail, Calendar, Teams/Meeting, Task, Reminder, Follow-up, Development, DevOps, Security, Database, Documentation, Monitoring y Knowledge.
 
 ## Seguridad
 
-- READ: automático.
-- PREPARE: análisis/preparación.
-- WRITE: exige aprobación explícita.
-- DANGEROUS: bloqueado.
-- Las automatizaciones recurrentes no pueden ejecutar WRITE/DANGEROUS.
-- `.env`, tokens OAuth y secretos están ignorados por Git.
+- READ: directo según RBAC.
+- PREPARE: no modifica recursos; READ_ONLY no lo ejecuta.
+- WRITE: requiere aprobación de un solo uso.
+- DANGEROUS: solo ADMIN y siempre requiere aprobación de un solo uso.
+- `approved:true` no tiene efecto y no aparece en el contrato OpenAPI.
+- La aprobación se vincula a actor + agente + acción + target + SHA-256 de parámetros.
+- Tokens Microsoft/Google se almacenan cifrados con Fernet.
+- `.env`, tokens, claves y credenciales están excluidos por `.gitignore`.
+- Cada request tiene `X-Correlation-ID` y cada ejecución se registra en SQLite.
 
-Consulta `SETUP_REAL.md` para Microsoft, Google y GitHub.
+## Instalación Windows
+
+Desde `C:\DEV\AGENTES`:
+
+```powershell
+.\INSTALAR_AGENTES.cmd
+```
+
+Para iniciar:
+
+```powershell
+.\INICIAR_AGENTES.cmd
+```
+
+No es necesario activar `.venv` manualmente.
+
+## Validación
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest -q
+.\.venv\Scripts\python.exe scripts\selftest.py
+```
+
+Consulta `SETUP_REAL.md` para OAuth y `IMPLEMENTATION_STATUS.md` para el detalle del checklist.

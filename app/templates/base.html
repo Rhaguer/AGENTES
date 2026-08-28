@@ -5,35 +5,28 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="color-scheme" content="dark">
   <title>{{ title }} · HAGUER Agent Platform</title>
-  <link rel="stylesheet" href="/static/css/agents.css?v=1.1.0">
+  <link rel="stylesheet" href="/static/css/agents.css?v=2.0.0">
 </head>
 <body data-page="{{ page }}">
 <div class="app-shell">
   <aside class="sidebar">
-    <div class="sidebar-brand">
-      <div class="sidebar-brand__mark">HA</div>
-      <div class="sidebar-brand__text"><p class="sidebar-brand__title">HAGUER AGENT</p><p class="sidebar-brand__subtitle">Platform {{ version }}</p></div>
-    </div>
+    <div class="sidebar-brand"><div class="sidebar-brand__mark">HA</div><div class="sidebar-brand__text"><p class="sidebar-brand__title">HAGUER AGENT</p><p class="sidebar-brand__subtitle">PLATFORM {{ version }}</p></div></div>
     <nav class="sidebar-nav" aria-label="Principal">
-      <div class="sidebar-section-label">Plataforma</div>
-      {% for key,href,label,icon in nav %}
-      <a class="nav-item {% if page==key %}is-active{% endif %}" href="{{ href }}"><span class="nav-item__icon">{{ icon }}</span><span class="nav-item__label">{{ label }}</span></a>
-      {% endfor %}
-      <div class="sidebar-section-label">Técnico</div>
-      <a class="nav-item" href="/docs" target="_blank"><span class="nav-item__icon">SW</span><span class="nav-item__label">Swagger API</span></a>
-      <a class="nav-item" href="/openapi.json" target="_blank"><span class="nav-item__icon">OA</span><span class="nav-item__label">OpenAPI JSON</span></a>
+      <div class="sidebar-section-label">Operación</div>
+      {% for key,href,label,icon in nav %}<a class="nav-item {% if page==key %}is-active{% endif %}" href="{{ href }}"><span class="nav-item__icon">{{ icon }}</span><span class="nav-item__label">{{ label }}</span></a>{% endfor %}
+      <div class="sidebar-section-label">API</div>
+      <a class="nav-item" href="/docs" target="_blank"><span class="nav-item__icon">SW</span><span class="nav-item__label">Swagger</span></a>
+      <a class="nav-item" href="/openapi.json" target="_blank"><span class="nav-item__icon">OA</span><span class="nav-item__label">OpenAPI</span></a>
     </nav>
-    <div class="sidebar-footer">FastAPI · OAuth · Audit<br>WRITE requiere aprobación.</div>
+    <div class="sidebar-footer"><strong>FastAPI · OAuth · RBAC</strong><br>WRITE/DANGEROUS usan aprobación de un solo uso.</div>
   </aside>
   <main class="main">
-    <header class="topbar">
-      <div class="page-heading"><h1 class="page-title">{{ title }}</h1><p class="page-subtitle">{% block subtitle %}Administración de HAGUER Agent Platform.{% endblock %}</p></div>
-      <div class="topbar-actions">{% block top_actions %}<a href="/docs" target="_blank" class="btn btn--secondary">SWAGGER</a>{% endblock %}</div>
-    </header>
+    <header class="topbar"><div class="page-heading"><h1 class="page-title">{{ title }}</h1><p class="page-subtitle">{% block subtitle %}Administración de HAGUER Agent Platform.{% endblock %}</p></div><div class="topbar-actions"><span class="status status--online" id="api-status">API</span>{% block top_actions %}<a href="/docs" target="_blank" class="btn btn--secondary">SWAGGER</a>{% endblock %}</div></header>
     {% block content %}{% endblock %}
   </main>
 </div>
+<div class="modal-backdrop hidden" id="approval-modal" aria-hidden="true"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="approval-title"><div class="modal-header"><div><h2 class="panel-title" id="approval-title">Autorización requerida</h2><p class="page-subtitle">La acción modificará un recurso real.</p></div><button class="btn btn--ghost btn--icon" id="approval-close" type="button">×</button></div><div class="modal-body"><div class="notice notice--warning" id="approval-summary"></div><div class="result-box" id="approval-detail"></div></div><div class="modal-footer"><button class="btn btn--secondary" id="approval-cancel" type="button">CANCELAR</button><button class="btn btn--danger" id="approval-confirm" type="button">APROBAR Y EJECUTAR</button></div></div></div>
 <div class="toast-stack"></div>
-<script src="/static/js/app.js?v=1.1.0" defer></script>
+<script src="/static/js/app.js?v=2.0.0" defer></script>
 </body>
 </html>
