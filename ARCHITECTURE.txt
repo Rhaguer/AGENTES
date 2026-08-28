@@ -1,0 +1,28 @@
+HAGUER AGENT PLATFORM REAL
+
+                                  USER
+                                   |
+                            FastAPI / Swagger
+                                   |
+                             ORCHESTRATOR
+       +---------------------------+---------------------------+
+       |                           |                           |
+ PRODUCTIVITY                  ENGINEERING                 CONTROL
+ Mail Agent                    Development Agent           Policy Engine
+ Calendar Agent                DevOps Agent                Audit JSONL
+ Meeting/Teams Agent           Database Agent              Approval Gate
+ Task Agent                    Security Agent              SQLite State
+ Reminder Agent                Monitoring Agent
+ FollowUp Agent                Documentation Agent
+                               Knowledge Agent
+       |                           |
+       +-----------+---------------+
+                   |
+      +------------+-------------+----------------+
+      |                          |                |
+ Microsoft Graph          Google Workspace     GitHub REST
+ Outlook Mail             Gmail                repositories
+ Outlook Calendar         Calendar             workflow runs
+ Teams chats/channels
+
+No LLM is required for the core execution path.

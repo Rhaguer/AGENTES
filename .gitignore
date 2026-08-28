@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+.pytest_cache/
+.env
+secrets/*
+!secrets/.gitkeep
+data/*.json
+data/*.db
+data/*.sqlite*
+logs/*.jsonl
