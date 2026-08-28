@@ -1,28 +1,41 @@
-HAGUER AGENT PLATFORM REAL
+HAGUER AGENT PLATFORM REAL UI 1.1.0
 
-                                  USER
-                                   |
-                            FastAPI / Swagger
-                                   |
-                             ORCHESTRATOR
-       +---------------------------+---------------------------+
-       |                           |                           |
- PRODUCTIVITY                  ENGINEERING                 CONTROL
- Mail Agent                    Development Agent           Policy Engine
- Calendar Agent                DevOps Agent                Audit JSONL
- Meeting/Teams Agent           Database Agent              Approval Gate
- Task Agent                    Security Agent              SQLite State
- Reminder Agent                Monitoring Agent
- FollowUp Agent                Documentation Agent
-                               Knowledge Agent
-       |                           |
-       +-----------+---------------+
-                   |
-      +------------+-------------+----------------+
-      |                          |                |
- Microsoft Graph          Google Workspace     GitHub REST
- Outlook Mail             Gmail                repositories
- Outlook Calendar         Calendar             workflow runs
- Teams chats/channels
+USUARIO
+  |
+  +--> Dashboard / UI
+  |      +-- /ui/agents
+  |      +-- /ui/integrations
+  |      +-- /ui/automations
+  |      +-- /ui/tasks
+  |      +-- /ui/monitoring
+  |      +-- /ui/audit
+  |      +-- /ui/settings
+  |
+  +--> Swagger /docs --------------------- Consola técnica
+  +--> OpenAPI /openapi.json ------------- Contrato API
+                    |
+                  FastAPI
+                    |
+              Orchestrator Agent
+                    |
+     +--------------+-----------------+
+     |              |                 |
+Productividad    Ingeniería          Control
+ Mail            Development         Security
+ Calendar        DevOps              Monitoring
+ Teams           Database            Audit
+ Task            Documentation       Policy Engine
+ Reminder        Knowledge
+ Follow-up
+     |
+     +--> Microsoft Graph (Outlook / Calendar / Teams)
+     +--> Google APIs (Gmail / Calendar)
+     +--> GitHub API
+     +--> Sistema local / SQLite / Git
 
-No LLM is required for the core execution path.
+POLÍTICA
+READ       -> automática
+PREPARE    -> análisis/preparación
+WRITE      -> aprobación explícita
+DANGEROUS  -> bloqueado
+AUTOMATION -> solo READ/PREPARE

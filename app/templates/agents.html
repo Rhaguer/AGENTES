@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block subtitle %}Catálogo de agentes y ejecutor controlado por nivel de riesgo.{% endblock %}
+{% block content %}
+<div class="notice">READ se ejecuta automáticamente. PREPARE prepara o analiza. WRITE exige aprobación explícita. DANGEROUS permanece bloqueado por política.</div>
+<section class="section"><div class="agent-grid" id="agents-grid"></div></section>
+<section class="section panel" id="executor"><div class="panel-header"><div><h2 class="panel-title" id="agent-title">Ejecutor de agente</h2><p class="page-subtitle" id="agent-description"></p></div><span class="badge" id="agent-category">—</span></div><div class="panel-body">
+<form id="agent-form" class="stack"><div class="grid-two"><div class="form-group"><label class="form-label">Agente</label><select class="select" id="agent-select"></select></div><div class="form-group"><label class="form-label">Acción</label><div class="row"><select class="select" id="action-select" style="flex:1"></select><span class="badge" id="action-risk">—</span></div></div></div><div class="form-group"><label class="form-label">Payload JSON</label><textarea class="textarea code" id="payload-json">{}</textarea><span class="form-help">Se carga un ejemplo según la acción seleccionada. Ajusta únicamente los datos necesarios.</span></div><label class="checkbox-row" id="agent-approved-wrap" style="display:none"><input type="checkbox" id="agent-approved"> Confirmo y apruebo esta acción WRITE</label><div class="row"><button class="btn btn--primary" type="submit">EJECUTAR AGENTE</button><a class="btn btn--secondary" href="/docs" target="_blank">ABRIR EN SWAGGER</a></div></form><div class="result-box" id="agent-result">Sin ejecución.</div>
+</div></section>
+{% endblock %}

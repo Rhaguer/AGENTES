@@ -1,8 +1,16 @@
-$ErrorActionPreference = 'Stop'
-Set-Location $PSScriptRoot\..
-if (-not (Test-Path .venv)) { py -m venv .venv }
-& .\.venv\Scripts\python.exe -m pip install --upgrade pip
-& .\.venv\Scripts\python.exe -m pip install -r requirements.txt
-if (-not (Test-Path .env)) { Copy-Item .env.example .env }
-Write-Host 'Instalación completada.'
-Write-Host 'Edita .env y configura MS_CLIENT_ID / Google credentials / GitHub token.'
+$ErrorActionPreference='Stop'
+Set-Location (Join-Path $PSScriptRoot '..')
+Write-Host '=== HAGUER AGENT PLATFORM - INSTALACION ==='
+$pythonCmd=Get-Command python -ErrorAction SilentlyContinue
+if(-not $pythonCmd){throw 'Python no está disponible en PATH. Instala Python 3.11+.'}
+$python=$pythonCmd.Source
+& $python --version
+if(Test-Path '.\.venv'){Write-Host 'Usando .venv existente.'}else{& $python -m venv '.\.venv'}
+$venvPython=(Resolve-Path '.\.venv\Scripts\python.exe').Path
+& $venvPython -m pip install --upgrade pip setuptools wheel
+& $venvPython -m pip install -r '.\requirements.txt'
+if(-not (Test-Path '.\.env')){Copy-Item '.\.env.example' '.\.env'}
+& $venvPython -m compileall -q '.\app'
+& $venvPython '.\scripts\selftest.py'
+Write-Host 'INSTALACION OK'
+Write-Host 'Ejecuta INICIAR_AGENTES.cmd'

@@ -1,7 +1,7 @@
 from __future__ import annotations
-import json
+import threading
+import uuid
 from pathlib import Path
-from typing import Any
 import httpx
 from app.core.config import settings
 
@@ -18,6 +18,9 @@ BASE_SCOPES=[
     'Channel.ReadBasic.All',
 ]
 CHANNEL_SCOPE='ChannelMessage.Read.All'
+
+_LOGIN_JOBS={}
+_LOGIN_LOCK=threading.Lock()
 
 class MicrosoftGraphConnector:
     def __init__(self):
@@ -37,8 +40,10 @@ class MicrosoftGraphConnector:
         msal=self._msal()
         cache=msal.SerializableTokenCache()
         if TOKEN_CACHE.exists():
-            try: cache.deserialize(TOKEN_CACHE.read_text(encoding='utf-8'))
-            except Exception: pass
+            try:
+                cache.deserialize(TOKEN_CACHE.read_text(encoding='utf-8'))
+            except Exception:
+                pass
         app=msal.PublicClientApplication(
             self.client_id,
             authority=f'https://login.microsoftonline.com/{self.tenant_id}',
@@ -57,17 +62,57 @@ class MicrosoftGraphConnector:
             TOKEN_CACHE.parent.mkdir(parents=True,exist_ok=True)
             TOKEN_CACHE.write_text(cache.serialize(),encoding='utf-8')
 
-    def login_device_code(self):
+    def start_device_login(self):
         cache,app=self._cache_and_app()
         flow=app.initiate_device_flow(scopes=self.scopes())
         if 'user_code' not in flow:
             raise RuntimeError(f'No se pudo iniciar device flow: {flow}')
-        # This call waits while the user completes Microsoft authentication.
-        result=app.acquire_token_by_device_flow(flow)
-        self._save_cache(cache)
-        if 'access_token' not in result:
-            raise RuntimeError(result.get('error_description') or str(result))
-        return {'message': flow.get('message','Autenticación completada.'), 'account': result.get('id_token_claims',{}).get('preferred_username')}
+
+        job_id=uuid.uuid4().hex
+        safe={
+            'job_id': job_id,
+            'status': 'pending',
+            'message': flow.get('message',''),
+            'user_code': flow.get('user_code'),
+            'verification_uri': flow.get('verification_uri') or flow.get('verification_url'),
+            'expires_in': flow.get('expires_in'),
+        }
+        with _LOGIN_LOCK:
+            _LOGIN_JOBS[job_id]=dict(safe)
+
+        def worker():
+            try:
+                result=app.acquire_token_by_device_flow(flow)
+                self._save_cache(cache)
+                if 'access_token' in result:
+                    update={
+                        'status':'authenticated',
+                        'account':result.get('id_token_claims',{}).get('preferred_username'),
+                    }
+                else:
+                    update={
+                        'status':'error',
+                        'error':result.get('error_description') or result.get('error') or str(result),
+                    }
+            except Exception as exc:
+                update={'status':'error','error':str(exc)}
+            with _LOGIN_LOCK:
+                if job_id in _LOGIN_JOBS:
+                    _LOGIN_JOBS[job_id].update(update)
+
+        threading.Thread(target=worker,daemon=True,name=f'ms-device-login-{job_id[:8]}').start()
+        return safe
+
+    def device_login_status(self,job_id):
+        with _LOGIN_LOCK:
+            job=_LOGIN_JOBS.get(job_id)
+            if not job:
+                raise RuntimeError('job_id de autenticación no encontrado o expirado en este proceso.')
+            return dict(job)
+
+    # Compatibilidad con el endpoint anterior: ahora inicia y devuelve el código inmediatamente.
+    def login_device_code(self):
+        return self.start_device_login()
 
     def _token(self):
         cache,app=self._cache_and_app()
@@ -87,10 +132,12 @@ class MicrosoftGraphConnector:
                         headers={'Authorization':f'Bearer {token}','Accept':'application/json'})
         if r.status_code >= 400:
             raise RuntimeError(f'Microsoft Graph {r.status_code}: {r.text[:1000]}')
-        if r.status_code == 204 or not r.content: return {}
+        if r.status_code == 204 or not r.content:
+            return {}
         return r.json()
 
-    def me(self): return self.request('GET','/me')
+    def me(self):
+        return self.request('GET','/me')
 
     def unread_mail(self,limit=20):
         params={'$filter':'isRead eq false','$top':str(min(int(limit),50)),

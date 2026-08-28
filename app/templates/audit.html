@@ -1,0 +1,5 @@
+{% extends "base.html" %}
+{% block subtitle %}Registro auditable de acciones, errores, recordatorios y automatizaciones.{% endblock %}
+{% block content %}
+<section class="panel"><div class="panel-header"><h2 class="panel-title">Eventos</h2><div class="toolbar"><select class="select" id="audit-limit"><option>50</option><option selected>100</option><option>250</option><option>500</option></select><button class="btn btn--secondary" id="audit-refresh">ACTUALIZAR</button></div></div><div class="panel-body"><div class="table-wrap"><table class="table"><thead><tr><th>Fecha</th><th>Origen</th><th>Acción</th><th>Estado</th><th>Detalle</th></tr></thead><tbody id="audit-body"></tbody></table></div></div></section>
+{% endblock %}

@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block subtitle %}Autenticación y verificación de Microsoft 365, Google Workspace, GitHub y servicios locales.{% endblock %}
+{% block content %}
+<div class="notice notice--warning">Las credenciales se configuran en <span class="code">.env</span> o <span class="code">secrets/</span>. La interfaz no muestra ni almacena contraseñas. OAuth genera tokens locales ignorados por Git.</div>
+<section class="section panel"><div class="panel-header"><h2 class="panel-title">Integraciones</h2><a href="/ui/settings" class="btn btn--sm btn--secondary">CONFIGURACIÓN</a></div><div class="panel-body"><div class="integration-list" id="integration-list"></div></div></section>
+<section class="section panel"><div class="panel-header"><h2 class="panel-title">Resultado de autenticación / verificación</h2></div><div class="panel-body"><div class="result-box" id="integration-result">Selecciona una integración.</div></div></section>
+{% endblock %}

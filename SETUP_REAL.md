@@ -72,3 +72,35 @@ WRITE: requiere `approved=true`.
 DANGEROUS: bloqueado.
 
 No guardes contraseñas de Outlook, Gmail o Teams en `.env`. Se usan tokens OAuth.
+
+
+## Flujo Microsoft Device Code corregido (v1.0.1)
+
+1. Configura `MS_CLIENT_ID` en `.env`.
+2. En Swagger ejecuta `POST /auth/microsoft/device-login`.
+3. La respuesta entrega `user_code`, `verification_uri` y `job_id` inmediatamente.
+4. Abre `verification_uri`, ingresa `user_code` y autentícate.
+5. Consulta `GET /auth/microsoft/device-login/status/{job_id}` hasta obtener `status: authenticated`.
+6. Verifica con `GET /auth/microsoft/me`.
+
+El registro de aplicación de Microsoft Entra debe permitir Public Client Flow para Device Code.
+
+
+## 6. Interfaz profesional 1.1.0
+
+Dashboard: `http://127.0.0.1:8000/`
+
+Vistas:
+
+- `/ui/agents`
+- `/ui/integrations`
+- `/ui/automations`
+- `/ui/tasks`
+- `/ui/monitoring`
+- `/ui/audit`
+- `/ui/settings`
+
+Swagger se conserva en `/docs` como catálogo técnico y consola de pruebas de la API.
+OpenAPI permanece en `/openapi.json`.
+
+Las automatizaciones recurrentes solo admiten acciones READ y PREPARE. Las acciones WRITE requieren aprobación interactiva y DANGEROUS permanece bloqueado.

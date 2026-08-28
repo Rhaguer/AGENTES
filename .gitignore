@@ -8,3 +8,6 @@ data/*.json
 data/*.db
 data/*.sqlite*
 logs/*.jsonl
+
+data/*.sqlite3-wal
+data/*.sqlite3-shm

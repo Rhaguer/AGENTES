@@ -79,3 +79,6 @@ class GoogleWorkspaceConnector:
               'end':{'dateTime':end_iso,'timeZone':timezone}}
         if attendees: body['attendees']=[{'email':a} for a in attendees]
         return self._service('calendar','v3').events().insert(calendarId='primary',body=body,sendUpdates='all').execute()
+
+    def me(self):
+        return self._service('gmail','v1').users().getProfile(userId='me').execute()

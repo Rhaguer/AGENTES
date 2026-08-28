@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block subtitle %}Vista operacional de agentes, integraciones, tareas, automatizaciones y errores recientes.{% endblock %}
+{% block content %}
+<section class="metric-grid">
+ <div class="metric"><div class="metric__label">Agentes</div><div class="metric__value" id="metric-agents">—</div><div class="metric__detail">Registrados</div></div>
+ <div class="metric"><div class="metric__label">Activos</div><div class="metric__value" id="metric-active">—</div><div class="metric__detail">Operativos</div></div>
+ <div class="metric"><div class="metric__label">Integraciones</div><div class="metric__value" id="metric-integrations">—</div><div class="metric__detail">Configuradas</div></div>
+ <div class="metric"><div class="metric__label">Errores</div><div class="metric__value" id="metric-errors">—</div><div class="metric__detail">Auditoría reciente</div></div>
+</section>
+<section class="section content-grid">
+ <div class="stack">
+  <div class="panel"><div class="panel-header"><h2 class="panel-title">Comando rápido</h2><span class="badge badge--blue">ORCHESTRATOR</span></div><div class="panel-body">
+   <form class="command-bar" id="command-form"><input class="input" id="command-text" placeholder="Ej.: muestra correos no leídos de Gmail" required><button class="btn btn--primary" type="submit">EJECUTAR</button></form>
+   <label class="checkbox-row" style="margin-top:10px"><input type="checkbox" id="command-approved"> Aprobar explícitamente acciones WRITE reconocidas por el router</label>
+   <div class="result-box" id="command-result">Listo.</div>
+  </div></div>
+  <div><div class="row space-between"><h2 class="panel-title">Agentes principales</h2><a class="btn btn--sm btn--secondary" href="/ui/agents">VER TODOS</a></div><div class="agent-grid section" id="dashboard-agents"></div></div>
+ </div>
+ <aside class="stack">
+  <div class="panel"><div class="panel-header"><h2 class="panel-title">Estado de trabajo</h2></div><div class="panel-body grid-two">
+   <div class="metric"><div class="metric__label">Tareas pendientes</div><div class="metric__value" id="metric-tasks">—</div></div>
+   <div class="metric"><div class="metric__label">Automatizaciones</div><div class="metric__value" id="metric-auto">—</div></div>
+  </div></div>
+  <div class="panel"><div class="panel-header"><h2 class="panel-title">Auditoría reciente</h2><a class="btn btn--sm btn--ghost" href="/ui/audit">ABRIR</a></div><div class="panel-body"><div class="kv-list" id="dashboard-audit"></div></div></div>
+  <div class="notice">Swagger se mantiene como consola técnica en <a class="link-tech" href="/docs" target="_blank">/docs</a>. La interfaz principal es este dashboard.</div>
+ </aside>
+</section>
+{% endblock %}
